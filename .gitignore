@@ -12,8 +12,17 @@ venv.bak/
 # Uploads folder
 uploads/
 
-# Secrets - ADD YOUR CLIENT SECRETS FILE HERE
+# Secrets
 /client_secret_*.json
+
+# Custom scripts
+check_excel.py
+create_fillable_form.py
+generate_data.py
+employee_enrolment_form.pdf
+form_template.pdf
+sample_data.xlsx
+
 
 # Flask
 instance/
