@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+*.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Uploads folder
+uploads/
+
+# Secrets - ADD YOUR CLIENT SECRETS FILE HERE
+/client_secret_*.json
+
+# Flask
+instance/
+
+# Editor files
+.vscode/
+.idea/
+
+# System Files
+.DS_Store
+Thumbs.db

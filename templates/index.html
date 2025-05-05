@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Filler</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+        }
+        .github-dark {
+            background-color: #161b22;
+            border-color: #30363d;
+        }
+        .github-button {
+            background-color: #238636;
+            color: #ffffff;
+        }
+        .github-button:hover {
+            background-color: #2ea043;
+        }
+        .github-border {
+            border-color: #30363d;
+        }
+        .github-header {
+            background-color: #161b22;
+            border-bottom: 1px solid #30363d;
+        }
+        .drag-over {
+            border: 2px dashed #238636 !important;
+            background-color: rgba(35, 134, 54, 0.1) !important;
+        }
+        .drop-zone {
+            border: 2px dashed #30363d;
+            background-color: #0d1117;
+        }
+        .drop-zone:hover {
+            border-color: #238636;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- User Info Bar -->
+    <div class="github-header shadow">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <img src="{{ user.picture }}" alt="Profile" class="w-8 h-8 rounded-full">
+                    <span class="text-gray-300">{{ user.email }}</span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="text-red-400 hover:text-red-300">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-100">PDF Form Filler</h1>
+        
+        <!-- File Upload Section -->
+        <div class="github-dark rounded-lg shadow-lg p-6 mb-8 border github-border">
+            <h2 class="text-xl font-semibold mb-4 text-gray-100">1. Upload Files</h2>
+            <div class="space-y-4">
+                <div class="drop-zone rounded-lg p-6" id="excel-drop-zone">
+                    <div class="text-center">
+                        <p class="mb-2 text-gray-400">Drop Excel file here or</p>
+                        <input type="file" id="excel-file" accept=".xlsx,.xls" class="hidden">
+                        <button onclick="document.getElementById('excel-file').click()" 
+                                class="github-button px-4 py-2 rounded hover:bg-green-600 transition duration-150">
+                            Browse Excel File
+                        </button>
+                        <p id="excel-file-name" class="mt-2 text-sm text-gray-400"></p>
+                    </div>
+                </div>
+
+                <div class="drop-zone rounded-lg p-6" id="pdf-drop-zone">
+                    <div class="text-center">
+                        <p class="mb-2 text-gray-400">Drop PDF file here or</p>
+                        <input type="file" id="pdf-file" accept=".pdf" class="hidden">
+                        <button onclick="document.getElementById('pdf-file').click()" 
+                                class="github-button px-4 py-2 rounded hover:bg-green-600 transition duration-150">
+                            Browse PDF File
+                        </button>
+                        <p id="pdf-file-name" class="mt-2 text-sm text-gray-400"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Field Mapping Section -->
+        <div class="github-dark rounded-lg shadow-lg p-6 mb-8 border github-border hidden" id="mapping-section">
+            <h2 class="text-xl font-semibold mb-4 text-gray-100">2. Map Fields</h2>
+            <div id="field-mappings" class="space-y-4">
+                <!-- Field mappings will be added here dynamically -->
+            </div>
+        </div>
+
+        <!-- Email Configuration -->
+        <div class="github-dark rounded-lg shadow-lg p-6 mb-8 border github-border hidden" id="email-section">
+            <h2 class="text-xl font-semibold mb-4 text-gray-100">3. Email Configuration</h2>
+            <div class="space-y-4">
+                <p class="text-gray-400">Emails will be sent from {{ user.email }}</p>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Email Subject</label>
+                    <input type="text" id="email-subject" 
+                           class="w-full px-3 py-2 bg-[#0d1117] border github-border rounded-md text-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500" 
+                           value="Your Filled Form">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Email Body</label>
+                    <div class="mb-2">
+                        <p class="text-sm text-gray-400">Available placeholders:</p>
+                        <div id="placeholder-list" class="flex flex-wrap gap-2 mt-1">
+                            <!-- Placeholders will be added here dynamically -->
+                        </div>
+                    </div>
+                    <textarea id="email-body" rows="6" 
+                              class="w-full px-3 py-2 bg-[#0d1117] border github-border rounded-md text-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                    >Dear {Surname},
+
+Please find attached your filled form.
+
+Best regards,
+{{ user.name }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Button -->
+        <div class="text-center">
+            <button id="process-button" 
+                    class="github-button px-6 py-3 rounded-lg hover:bg-green-600 transition duration-150 hidden">
+                Process and Send
+            </button>
+        </div>
+
+        <!-- Progress Section -->
+        <div id="progress-section" class="mt-8 hidden">
+            <div class="github-dark rounded-lg shadow-lg p-6 border github-border">
+                <h2 class="text-xl font-semibold mb-4 text-gray-100">Progress</h2>
+                <div id="progress-list" class="space-y-2">
+                    <!-- Progress items will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add dynamic placeholder buttons
+        function addPlaceholderButton(placeholder) {
+            const button = document.createElement('button');
+            button.className = 'px-2 py-1 text-sm github-border border rounded hover:border-green-500 text-gray-300';
+            button.textContent = placeholder;
+            button.onclick = function() {
+                const emailBody = document.getElementById('email-body');
+                const cursorPos = emailBody.selectionStart;
+                const textBefore = emailBody.value.substring(0, cursorPos);
+                const textAfter = emailBody.value.substring(cursorPos);
+                emailBody.value = textBefore + '{' + placeholder + '}' + textAfter;
+            };
+            document.getElementById('placeholder-list').appendChild(button);
+        }
+
+        // File upload handling
+        function handleFileSelect(fileId, nameId) {
+            const fileInput = document.getElementById(fileId);
+            const fileName = document.getElementById(nameId);
+            const dropZone = fileInput.closest('.drop-zone');
+            
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    fileName.textContent = file.name;
+                    fileName.className = 'mt-2 text-sm text-green-500';
+                    dropZone.classList.add('border-green-500');
+                    dropZone.classList.remove('border-[#30363d]');
+
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'mt-2 text-green-500 text-sm flex items-center justify-center';
+                    successMsg.innerHTML = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        File uploaded successfully
+                    `;
+                    
+                    // Remove any existing success message
+                    const existingMsg = dropZone.querySelector('.text-green-500');
+                    if (existingMsg && existingMsg !== fileName) {
+                        existingMsg.remove();
+                    }
+                    
+                    dropZone.querySelector('.text-center').appendChild(successMsg);
+
+                    // Check if both files are uploaded
+                    checkBothFilesUploaded();
+                }
+            });
+        }
+
+        // Check if both files are uploaded
+        function checkBothFilesUploaded() {
+            const excelFile = document.getElementById('excel-file').files.length > 0;
+            const pdfFile = document.getElementById('pdf-file').files.length > 0;
+            
+            if (excelFile && pdfFile) {
+                // Show the mapping section
+                document.getElementById('mapping-section').classList.remove('hidden');
+                
+                // Scroll to mapping section
+                document.getElementById('mapping-section').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        // Drag and drop handling
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.target.closest('.drop-zone').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.target.closest('.drop-zone').classList.remove('drag-over');
+        }
+
+        function handleDrop(e, fileId, nameId) {
+            e.preventDefault();
+            const zone = e.target.closest('.drop-zone');
+            zone.classList.remove('drag-over');
+            
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                const fileInput = document.getElementById(fileId);
+                fileInput.files = files;
+                const fileName = document.getElementById(nameId);
+                fileName.textContent = files[0].name;
+                fileName.className = 'mt-2 text-sm text-green-500';
+                zone.classList.add('border-green-500');
+                zone.classList.remove('border-[#30363d]');
+
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'mt-2 text-green-500 text-sm flex items-center justify-center';
+                successMsg.innerHTML = `
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    File uploaded successfully
+                `;
+                
+                // Remove any existing success message
+                const existingMsg = zone.querySelector('.text-green-500');
+                if (existingMsg && existingMsg !== fileName) {
+                    existingMsg.remove();
+                }
+                
+                zone.querySelector('.text-center').appendChild(successMsg);
+
+                // Check if both files are uploaded
+                checkBothFilesUploaded();
+            }
+        }
+
+        // Initialize file upload handlers
+        handleFileSelect('excel-file', 'excel-file-name');
+        handleFileSelect('pdf-file', 'pdf-file-name');
+
+        // Initialize drag and drop
+        const dropZones = document.querySelectorAll('.drop-zone');
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', handleDragOver);
+            zone.addEventListener('dragleave', handleDragLeave);
+        });
+
+        document.getElementById('excel-drop-zone').addEventListener('drop', e => handleDrop(e, 'excel-file', 'excel-file-name'));
+        document.getElementById('pdf-drop-zone').addEventListener('drop', e => handleDrop(e, 'pdf-file', 'pdf-file-name'));
+
+        // Upload files and get field information
+        async function uploadFiles() {
+            console.log('Starting file upload...');
+            const formData = new FormData();
+            formData.append('excel_file', document.getElementById('excel-file').files[0]);
+            formData.append('pdf_file', document.getElementById('pdf-file').files[0]);
+
+            try {
+                console.log('Sending files to server...');
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Upload failed:', errorData);
+                    alert('Upload failed: ' + (errorData.error || 'Unknown error'));
+                    return;
+                }
+
+                const data = await response.json();
+                console.log('Server response:', data);
+                
+                if (!data.pdf_fields || !data.excel_headers) {
+                    console.error('Missing fields in response:', data);
+                    alert('Error: PDF fields or Excel headers not found in response');
+                    return;
+                }
+
+                showFieldMapping(data.pdf_fields, data.excel_headers);
+                window.uploadedFiles = {
+                    excel_path: data.excel_path,
+                    pdf_path: data.pdf_path
+                };
+            } catch (error) {
+                console.error('Error during upload:', error);
+                alert('Failed to upload files. Please try again. Error: ' + error.message);
+            }
+        }
+
+        // Show field mapping interface
+        function showFieldMapping(pdfFields, excelHeaders) {
+            console.log('Showing field mapping for:', { pdfFields, excelHeaders });
+            const mappingSection = document.getElementById('mapping-section');
+            const emailSection = document.getElementById('email-section');
+            const processButton = document.getElementById('process-button');
+            const fieldMappings = document.getElementById('field-mappings');
+            const placeholderList = document.getElementById('placeholder-list');
+            
+            // Clear existing content
+            fieldMappings.innerHTML = '';
+            placeholderList.innerHTML = '';
+            
+            // Add placeholders for email template
+            excelHeaders.forEach(header => {
+                const placeholderBtn = document.createElement('button');
+                placeholderBtn.className = 'px-2 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200';
+                placeholderBtn.textContent = `{${header}}`;
+                placeholderBtn.onclick = () => {
+                    const emailBody = document.getElementById('email-body');
+                    const cursorPos = emailBody.selectionStart;
+                    const textBefore = emailBody.value.substring(0, cursorPos);
+                    const textAfter = emailBody.value.substring(emailBody.selectionEnd);
+                    emailBody.value = textBefore + `{${header}}` + textAfter;
+                    emailBody.focus();
+                    emailBody.selectionStart = emailBody.selectionEnd = cursorPos + header.length + 2;
+                };
+                placeholderList.appendChild(placeholderBtn);
+            });
+            
+            // Add field mappings
+            pdfFields.forEach(pdfField => {
+                console.log('Creating mapping for PDF field:', pdfField);
+                const mappingDiv = document.createElement('div');
+                mappingDiv.className = 'flex items-center space-x-4';
+                mappingDiv.innerHTML = `
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">PDF Field: ${pdfField}</label>
+                    </div>
+                    <div class="w-1/2">
+                        <select class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                data-pdf-field="${pdfField}">
+                            <option value="">Select Excel Column</option>
+                            ${excelHeaders.map(header => `<option value="${header}">${header}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+                fieldMappings.appendChild(mappingDiv);
+            });
+
+            console.log('Showing mapping interface...');
+            mappingSection.classList.remove('hidden');
+            emailSection.classList.remove('hidden');
+            processButton.classList.remove('hidden');
+        }
+
+        // Process button click handler
+        document.getElementById('process-button').addEventListener('click', async () => {
+            const fieldMapping = {};
+            document.querySelectorAll('#field-mappings select').forEach(select => {
+                if (select.value) {
+                    fieldMapping[select.dataset.pdfField] = select.value;
+                }
+            });
+
+            console.log('Field mapping:', fieldMapping);
+            
+            const emailSubject = document.getElementById('email-subject').value;
+            const emailBody = document.getElementById('email-body').value;
+
+            const progressSection = document.getElementById('progress-section');
+            const progressList = document.getElementById('progress-list');
+            progressSection.classList.remove('hidden');
+            progressList.innerHTML = '<p>Processing...</p>';
+
+            try {
+                console.log('Sending process request...');
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        field_mapping: fieldMapping,
+                        excel_path: window.uploadedFiles.excel_path,
+                        pdf_path: window.uploadedFiles.pdf_path,
+                        email_subject: emailSubject,
+                        email_body: emailBody
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Processing failed:', errorData);
+                    throw new Error(errorData.error || 'Processing failed');
+                }
+
+                const results = await response.json();
+                console.log('Process results:', results);
+                showResults(results.results);
+            } catch (error) {
+                console.error('Error during processing:', error);
+                progressList.innerHTML = `<p class="text-red-500">Error occurred during processing: ${error.message}</p>`;
+            }
+        });
+
+        // Show processing results
+        function showResults(results) {
+            console.log('Showing results:', results);
+            const progressList = document.getElementById('progress-list');
+            progressList.innerHTML = results.map(result => `
+                <div class="p-2 ${result.success ? 'text-green-600' : 'text-red-600'}">
+                    ${result.recipient}: ${result.message}
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
