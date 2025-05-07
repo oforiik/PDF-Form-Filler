@@ -9,6 +9,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Virtual environments
+myvenv/
+form/lib/
+
 # Uploads folder
 uploads/
 

@@ -228,15 +228,20 @@ def upload_files():
         excel_headers = df.columns.tolist()
         logger.debug(f"Excel headers found: {excel_headers}")
         
-        return jsonify({
-            'pdf_fields': list(pdf_fields.keys()),
-            'excel_headers': excel_headers,
-            'excel_path': excel_path,
-            'pdf_path': pdf_path
-        })
+        return render_template('mapping.html',
+        pdf_fields=list(pdf_fields.keys()),
+        excel_headers=excel_headers,
+        excel_path=excel_path,
+        pdf_path=pdf_path
+    )
     except Exception as e:
         logger.error(f"Error processing files: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/debug-pdf')
+def debug_pdf():
+    pdf_path = 'uploads/form_template.pdf'  # Replace with actual path
+    return jsonify(fields=list(fillpdfs.get_form_fields(pdf_path).keys()))
 
 @app.route('/process', methods=['POST'])
 @login_required

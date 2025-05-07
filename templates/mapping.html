@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2>Map Fields</h2>
+    <form action="/process" method="POST">
+        <input type="hidden" name="excel_path" value="{{ excel_path }}">
+        <input type="hidden" name="pdf_path" value="{{ pdf_path }}">
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h4>PDF Form Fields</h4>
+                <ul class="list-group">
+                    {% for field in pdf_fields %}
+                    <li class="list-group-item">{{ field }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <div class="col-md-6">
+                <h4>Excel Columns</h4>
+                <ul class="list-group">
+                    {% for header in excel_headers %}
+                    <li class="list-group-item">{{ header }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <h4>Mapping</h4>
+            {% for pdf_field in pdf_fields %}
+            <div class="form-group">
+                <label>{{ pdf_field }}</label>
+                <select name="{{ pdf_field }}" class="form-control">
+                    <option value="">Select Excel Column</option>
+                    {% for header in excel_headers %}
+                    <option value="{{ header }}">{{ header }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Process Mappings</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

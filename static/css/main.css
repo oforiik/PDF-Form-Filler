@@ -1,0 +1,15 @@
+/* In static/css/main.css */
+#mappingSection {
+    display: block !important;
+    margin-top: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.list-group {
+    margin-bottom: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
