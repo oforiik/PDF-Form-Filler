@@ -229,11 +229,12 @@ def upload_files():
         logger.debug(f"Excel headers found: {excel_headers}")
         
         return render_template('mapping.html',
-        pdf_fields=list(pdf_fields.keys()),
-        excel_headers=excel_headers,
-        excel_path=excel_path,
-        pdf_path=pdf_path
-    )
+            pdf_fields=list(pdf_fields.keys()),
+            excel_headers=excel_headers,
+            excel_path=excel_path,
+            pdf_path=pdf_path
+        )
+
     except Exception as e:
         logger.error(f"Error processing files: {str(e)}")
         return jsonify({'error': str(e)}), 500

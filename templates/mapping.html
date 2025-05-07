@@ -1,45 +1,49 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-    <h2>Map Fields</h2>
-    <form action="/process" method="POST">
+<div class="container mt-4">
+    <h2>Map PDF Fields to Excel Columns</h2>
+    <form method="POST" action="{{ url_for('process_files') }}">
         <input type="hidden" name="excel_path" value="{{ excel_path }}">
         <input type="hidden" name="pdf_path" value="{{ pdf_path }}">
         
-        <div class="row">
+        <div class="row mb-4">
             <div class="col-md-6">
                 <h4>PDF Form Fields</h4>
-                <ul class="list-group">
-                    {% for field in pdf_fields %}
-                    <li class="list-group-item">{{ field }}</li>
-                    {% endfor %}
-                </ul>
+                <div class="card">
+                    <div class="card-body">
+                        {% for field in pdf_fields %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field }}</label>
+                            <select name="{{ field }}" class="form-select">
+                                <option value="">Select Excel Column</option>
+                                {% for header in excel_headers %}
+                                <option value="{{ header }}">{{ header }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             
             <div class="col-md-6">
-                <h4>Excel Columns</h4>
-                <ul class="list-group">
-                    {% for header in excel_headers %}
-                    <li class="list-group-item">{{ header }}</li>
-                    {% endfor %}
-                </ul>
+                <h4>Excel Columns Preview</h4>
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="list-group">
+                            {% for header in excel_headers %}
+                            <li class="list-group-item">{{ header }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="mt-4">
-            <h4>Mapping</h4>
-            {% for pdf_field in pdf_fields %}
-            <div class="form-group">
-                <label>{{ pdf_field }}</label>
-                <select name="{{ pdf_field }}" class="form-control">
-                    <option value="">Select Excel Column</option>
-                    {% for header in excel_headers %}
-                    <option value="{{ header }}">{{ header }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            {% endfor %}
-            <button type="submit" class="btn btn-primary">Process Mappings</button>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-gear-fill"></i> Process Mappings
+            </button>
         </div>
     </form>
 </div>
